@@ -2,9 +2,11 @@ import customtkinter as ctk  # Import customtkinter as ctk abbreviation
 import tkinter as tk
 from customtkinter import CTkImage  # Import CTkImage
 from PIL import Image
+from settings import TITLE_BAR_COLOR_LIST, TEXTBOX_COLOR_LIST, BUTTON_HOVER_COLOR_LIST
 
-TITLEBAR_FG_COLOR = "#fff170"
-TEXTBOX_FG_COLOR = "#fffea1"
+TITLE_BAR_COLOR = TITLE_BAR_COLOR_LIST[0]
+TEXTBOX_COLOR = TEXTBOX_COLOR_LIST[0]
+BUTTON_HOVER_COLOR = BUTTON_HOVER_COLOR_LIST[0]
 
 
 class App(ctk.CTk):
@@ -27,10 +29,10 @@ class App(ctk.CTk):
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
 
-        self.overrideredirect(True)
+        # self.overrideredirect(True)
 
         self.titleBar = ctk.CTkFrame(
-            self, fg_color=TITLEBAR_FG_COLOR, height=15, corner_radius=0
+            self, fg_color=TITLE_BAR_COLOR, height=15, corner_radius=0
         )
         self.titleBar.grid(row=0, column=0, sticky="ew")
 
@@ -43,9 +45,13 @@ class App(ctk.CTk):
             self.titleBar,
             height=14,
             text="",
+            text_color="black",
             font=("Times", 14),
         )
         self.titleBarLabel.pack(side="left", padx=2, pady=2)
+
+        self.titleBarLabel.bind("<Button-1>", self.on_drag_start)
+        self.titleBarLabel.bind("<B1-Motion>", self.move_window)
 
         # Create buttons to minimize, maximize, and close the window
         self.minBtn = BtnOptionModule(self.titleBar, minImg, self.min_window)
@@ -60,7 +66,8 @@ class App(ctk.CTk):
         self.textbox = ctk.CTkTextbox(
             self,
             font=("Times", 18),
-            fg_color=TEXTBOX_FG_COLOR,
+            fg_color=TEXTBOX_COLOR,
+            text_color="black",
             width=325,
             corner_radius=0,
         )
@@ -131,7 +138,7 @@ class BtnOptionModule(ctk.CTkButton):
             height=20,
             corner_radius=0,
             fg_color="transparent",
-            hover_color="#e3e3e3",
+            hover_color=BUTTON_HOVER_COLOR,
         )
 
 
