@@ -27,7 +27,7 @@ class App(ctk.CTk):
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
 
-        # self.overrideredirect(True)
+        self.overrideredirect(True)
 
         self.titleBar = ctk.CTkFrame(
             self, fg_color=TITLEBAR_FG_COLOR, height=15, corner_radius=0
