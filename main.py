@@ -2,37 +2,49 @@ import customtkinter as ctk  # Import customtkinter as ctk abbreviation
 import tkinter as tk
 from customtkinter import CTkImage  # Import CTkImage
 from PIL import Image
-from settings import TITLE_BAR_COLOR_LIST, TEXTBOX_COLOR_LIST, BUTTON_HOVER_COLOR_LIST
+from settings import (
+    TITLE_BAR_COLOR_LIST,
+    TEXTBOX_COLOR_LIST,
+    BUTTON_HOVER_COLOR_LIST,
+    TITLE_BAR_SIZE,
+)
 
-TITLE_BAR_COLOR = TITLE_BAR_COLOR_LIST[0]
-TEXTBOX_COLOR = TEXTBOX_COLOR_LIST[0]
-BUTTON_HOVER_COLOR = BUTTON_HOVER_COLOR_LIST[0]
+COLOR_CYCLE = 0
+TITLE_BAR_COLOR = TITLE_BAR_COLOR_LIST[COLOR_CYCLE]
+TEXTBOX_COLOR = TEXTBOX_COLOR_LIST[COLOR_CYCLE]
+BUTTON_HOVER_COLOR = BUTTON_HOVER_COLOR_LIST[COLOR_CYCLE]
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        minImg = CTkImage(Image.open("assets/min.png"), size=(10, 10))
-        maxImg = CTkImage(Image.open("assets/max.png"), size=(10, 10))
-        closeImg = CTkImage(Image.open("assets/close.png"), size=(10, 10))
+        minImg = CTkImage(Image.open("assets/min.png"), size=(12, 12))
+        maxImg = CTkImage(Image.open("assets/max.png"), size=(12, 12))
+        closeImg = CTkImage(Image.open("assets/close.png"), size=(12, 12))
 
         self.maximized = False
+        self.minimized = False
 
         # Sets the title of the window
         self.title("Quick Stick")
 
         # Creates starting layout size
         self.geometry("300x200")
+        self.minsize(width=300, height=100)
+
+        # Changes background color
+        self.configure(fg_color=TEXTBOX_COLOR)
 
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=0)
         self.columnconfigure(0, weight=1)
 
         # self.overrideredirect(True)
 
         self.titleBar = ctk.CTkFrame(
-            self, fg_color=TITLE_BAR_COLOR, height=15, corner_radius=0
+            self, fg_color=TITLE_BAR_COLOR, height=TITLE_BAR_SIZE, corner_radius=0
         )
         self.titleBar.grid(row=0, column=0, sticky="ew")
 
@@ -41,14 +53,17 @@ class App(ctk.CTk):
         self.titleBar.bind("<B1-Motion>", self.move_window)
 
         # Creates a label for the sticky note shown in the title bar
-        self.titleBarLabel = ctk.CTkLabel(
+        # We are using a textbox widget because the normal label cuts off smaller font text
+        self.titleBarLabel = ctk.CTkTextbox(
             self.titleBar,
-            height=14,
-            text="",
+            width=240,
+            height=TITLE_BAR_SIZE,
             text_color="black",
-            font=("Times", 14),
+            font=("Helvetica", 10),
+            fg_color=TITLE_BAR_COLOR,
+            corner_radius=0,
         )
-        self.titleBarLabel.pack(side="left", padx=2, pady=2)
+        self.titleBarLabel.pack(side="left", fill="y")
 
         self.titleBarLabel.bind("<Button-1>", self.on_drag_start)
         self.titleBarLabel.bind("<B1-Motion>", self.move_window)
@@ -58,14 +73,15 @@ class App(ctk.CTk):
         self.maxBtn = BtnOptionModule(self.titleBar, maxImg, self.max_window)
         self.closeBtn = BtnOptionModule(self.titleBar, closeImg, self.close_window)
 
-        self.closeBtn.pack(side="right", padx=2)
-        self.maxBtn.pack(side="right", padx=2)
-        self.minBtn.pack(side="right", padx=2)
+        # Packs the buttons to the right side of the title bar
+        self.closeBtn.pack(side="right")
+        self.maxBtn.pack(side="right")
+        self.minBtn.pack(side="right")
 
         # Creating a textbox to hold user input
         self.textbox = ctk.CTkTextbox(
             self,
-            font=("Times", 18),
+            font=("Helvetica", 16),
             fg_color=TEXTBOX_COLOR,
             text_color="black",
             width=325,
@@ -73,7 +89,12 @@ class App(ctk.CTk):
         )
         self.textbox.grid(row=1, column=0, sticky="nsew")
         self.textbox.bind("<KeyRelease>", self.update_title)
-        # self.textbox.bind("<Button-1>", self.focus_text)
+
+        # Create a button for the bottom right to resize window
+        self.resizeBtn = ctk.CTkButton(
+            self, text="", width=8, height=8, corner_radius=0
+        )
+        self.resizeBtn.grid(row=2, column=0, sticky="e")
 
     # Records the initial position of the mouse
     def on_drag_start(self, event):
@@ -109,7 +130,12 @@ class App(ctk.CTk):
 
     # Command for min button to minimize window
     def min_window(self):
-        self.iconify()
+        if self.minimized:
+            self.geometry("300x200")
+            self.minimized = False
+        else:
+            self.geometry(f"{self.winfo_width()}x{TITLE_BAR_SIZE}")
+            self.minimized = True
 
     # Updates the title bar's label which correlates to the first line of the textbox
     def update_title(self, event):
@@ -123,7 +149,10 @@ class App(ctk.CTk):
         self.text = self.textbox.get("1.0", endIndexFormat).strip()
 
         # Set the title bar label to be the text we obtained
-        self.titleBarLabel.configure(text=self.text)
+        self.titleBarLabel.configure(state="normal")
+        self.titleBarLabel.delete("1.0", "end")
+        self.titleBarLabel.insert("1.0", self.text)
+        self.titleBarLabel.configure(state="disabled")
 
 
 class BtnOptionModule(ctk.CTkButton):
