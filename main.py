@@ -25,13 +25,14 @@ class App(ctk.CTk):
 
         self.maximized = False
         self.minimized = False
+        self.titleBarLabelStr = ""
 
         # Sets the title of the window
         self.title("Quick Stick")
 
         # Creates starting layout size
         self.geometry("300x200")
-        self.minsize(width=300, height=100)
+        self.minsize(width=300, height=TITLE_BAR_SIZE)
 
         # Changes background color
         self.configure(fg_color=TEXTBOX_COLOR)
@@ -62,6 +63,9 @@ class App(ctk.CTk):
             font=("Helvetica", 10),
             fg_color=TITLE_BAR_COLOR,
             corner_radius=0,
+            state="disabled",
+            wrap="none",
+            activate_scrollbars=False,
         )
         self.titleBarLabel.pack(side="left", fill="y")
 
@@ -113,6 +117,7 @@ class App(ctk.CTk):
 
     # Command for close button to close window
     def close_window(self):
+        # Closes window
         self.destroy()
 
     # Command for max button to maxmize window
@@ -132,9 +137,25 @@ class App(ctk.CTk):
     def min_window(self):
         if self.minimized:
             self.geometry("300x200")
+
+            # Set the title bar label to be the text we obtained
+            self.titleBarLabel.configure(state="normal")
+            self.titleBarLabel.delete("1.0", "end")
+            self.titleBarLabel.insert("1.0", "")
+            self.titleBarLabel.configure(state="disabled")
+
+            # Set the state of minimized to be False
             self.minimized = False
         else:
             self.geometry(f"{self.winfo_width()}x{TITLE_BAR_SIZE}")
+
+            # Set the title bar label to be the text we obtained
+            self.titleBarLabel.configure(state="normal")
+            self.titleBarLabel.delete("1.0", "end")
+            self.titleBarLabel.insert("1.0", self.titleBarLabelStr)
+            self.titleBarLabel.configure(state="disabled")
+
+            # Set the state of minimized to be true
             self.minimized = True
 
     # Updates the title bar's label which correlates to the first line of the textbox
@@ -146,13 +167,7 @@ class App(ctk.CTk):
         endIndexFormat = f"1.0 + {endIndex} chars"
 
         # use the get function with the start and end index to get the text from the textbox
-        self.text = self.textbox.get("1.0", endIndexFormat).strip()
-
-        # Set the title bar label to be the text we obtained
-        self.titleBarLabel.configure(state="normal")
-        self.titleBarLabel.delete("1.0", "end")
-        self.titleBarLabel.insert("1.0", self.text)
-        self.titleBarLabel.configure(state="disabled")
+        self.titleBarLabelStr = self.textbox.get("1.0", endIndexFormat).strip()
 
 
 class BtnOptionModule(ctk.CTkButton):
