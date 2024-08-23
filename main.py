@@ -42,7 +42,7 @@ class App(ctk.CTk):
         self.rowconfigure(2, weight=0)
         self.columnconfigure(0, weight=1)
 
-        # self.overrideredirect(True)
+        self.overrideredirect(True)
 
         self.titleBar = ctk.CTkFrame(
             self, fg_color=TITLE_BAR_COLOR, height=TITLE_BAR_SIZE, corner_radius=0
@@ -96,9 +96,17 @@ class App(ctk.CTk):
 
         # Create a button for the bottom right to resize window
         self.resizeBtn = ctk.CTkButton(
-            self, text="", width=8, height=8, corner_radius=0
+            self,
+            text="",
+            width=8,
+            height=8,
+            corner_radius=0,
+            fg_color=TEXTBOX_COLOR,
+            hover_color=BUTTON_HOVER_COLOR,
         )
         self.resizeBtn.grid(row=2, column=0, sticky="e")
+        self.resizeBtn.bind("<Button-1>", self.on_drag_start)
+        self.resizeBtn.bind("<B1-Motion>", self.resize_window)
 
     # Records the initial position of the mouse
     def on_drag_start(self, event):
@@ -114,6 +122,12 @@ class App(ctk.CTk):
         new_x = self.winfo_rootx() + event.x - self.drag_start_x
         new_y = self.winfo_rooty() + event.y - self.drag_start_y
         self.geometry(f"+{new_x}+{new_y}")
+
+    # Resizes window when the bottom right button is selected and dragged
+    def resize_window(self, event):
+        new_x_size = self.winfo_width() + event.x - self.drag_start_x
+        new_y_size = self.winfo_height() + event.y - self.drag_start_y
+        self.geometry(f"{new_x_size}x{new_y_size}")
 
     # Command for close button to close window
     def close_window(self):
