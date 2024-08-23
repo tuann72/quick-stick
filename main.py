@@ -32,7 +32,6 @@ class App(ctk.CTk):
 
         # Creates starting layout size
         self.geometry("300x200")
-        self.minsize(width=300, height=TITLE_BAR_SIZE)
 
         # Changes background color
         self.configure(fg_color=TEXTBOX_COLOR)
@@ -127,7 +126,8 @@ class App(ctk.CTk):
     def resize_window(self, event):
         new_x_size = self.winfo_width() + event.x - self.drag_start_x
         new_y_size = self.winfo_height() + event.y - self.drag_start_y
-        self.geometry(f"{new_x_size}x{new_y_size}")
+        if new_x_size >= 300 and new_y_size >= 60:
+            self.geometry(f"{new_x_size}x{new_y_size}")
 
     # Command for close button to close window
     def close_window(self):
@@ -149,6 +149,10 @@ class App(ctk.CTk):
 
     # Command for min button to minimize window
     def min_window(self):
+        self.withdraw()
+
+    # Command for collapse button to collapse window
+    def collapse_window(self):
         if self.minimized:
             self.geometry("300x200")
 
