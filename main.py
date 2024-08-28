@@ -1,7 +1,10 @@
 import customtkinter as ctk  # Import customtkinter as ctk abbreviation
 import tkinter as tk
 from customtkinter import CTkImage  # Import CTkImage
-from PIL import Image
+from PIL import Image, ImageDraw
+from pystray import MenuItem as item
+import pystray
+
 from settings import (
     TITLE_BAR_COLOR_LIST,
     TEXTBOX_COLOR_LIST,
@@ -107,6 +110,12 @@ class App(ctk.CTk):
         self.resizeBtn.bind("<Button-1>", self.on_drag_start)
         self.resizeBtn.bind("<B1-Motion>", self.resize_window)
 
+        # Set up system tray icon
+        self.tray_icon = pystray.Icon(
+            "icon", Image.open("assets/icon.ico"), "Quick-Stick", self.create_menu()
+        )
+        self.tray_icon.run_detached()
+
     # Records the initial position of the mouse
     def on_drag_start(self, event):
         # Records inital x position on the screen when clicked
@@ -133,6 +142,8 @@ class App(ctk.CTk):
     def close_window(self):
         # Closes window
         self.destroy()
+        if self.tray_icon:
+            self.tray_icon.stop()  # Stop the tray icon
 
     # Command for max button to maxmize window
     def max_window(self):
@@ -150,10 +161,18 @@ class App(ctk.CTk):
     # Command for min button to minimize window
     def min_window(self):
         self.withdraw()
+        self.tray_icon.visible = True  # Show the tray icon
 
-    # def deiconify(self):
-    #     self.update_idletasks()
-    #     self.deiconify()
+    # Restores the window back to the screen
+    def restore(self):
+        self.deiconify()  # Show the window
+        self.update_idletasks()  # Ensure the window is restored with the correct geometry
+        self.tray_icon.visible = False  # Hide the tray icon
+
+    # Create menu options for system tray icon
+    def create_menu(self):
+        # Creates two options, a restore option and a quit option.
+        return (item("Restore", self.restore), item("Quit", self.close_window))
 
     # Command for collapse button to collapse window
     def collapse_window(self):
