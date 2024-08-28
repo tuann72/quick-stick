@@ -41,7 +41,7 @@ class App(ctk.CTk):
         self.rowconfigure(2, weight=0)
         self.columnconfigure(0, weight=1)
 
-        self.overrideredirect(True)
+        # self.overrideredirect(True)
 
         self.titleBar = ctk.CTkFrame(
             self, fg_color=TITLE_BAR_COLOR, height=TITLE_BAR_SIZE, corner_radius=0
@@ -149,7 +149,7 @@ class App(ctk.CTk):
 
     # Command for min button to minimize window
     def min_window(self):
-        self.withdraw()
+        self.attributes("-topmost", False)
 
     # Command for collapse button to collapse window
     def collapse_window(self):
