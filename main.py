@@ -2,8 +2,9 @@ import customtkinter as ctk  # Import customtkinter as ctk abbreviation
 import tkinter as tk
 from customtkinter import CTkImage  # Import CTkImage
 from PIL import Image, ImageDraw
-from pystray import MenuItem as item
+from pystray import MenuItem as item, Menu as menu
 import pystray
+import time
 
 from settings import (
     TITLE_BAR_COLOR_LIST,
@@ -29,6 +30,8 @@ class App(ctk.CTk):
         self.maximized = False
         self.minimized = False
         self.titleBarLabelStr = ""
+        self.curr_width = 300
+        self.curr_height = 200
 
         # Sets the title of the window
         self.title("Quick Stick")
@@ -56,18 +59,16 @@ class App(ctk.CTk):
         self.titleBar.bind("<B1-Motion>", self.move_window)
 
         # Creates a label for the sticky note shown in the title bar
-        # We are using a textbox widget because the normal label cuts off smaller font text
-        self.titleBarLabel = ctk.CTkTextbox(
+        self.titleBarLabel = ctk.CTkLabel(
             self.titleBar,
             width=240,
             height=TITLE_BAR_SIZE,
             text_color="black",
-            font=("Helvetica", 10),
-            fg_color=TITLE_BAR_COLOR,
+            font=("Helvetica", 12),
             corner_radius=0,
-            state="disabled",
-            wrap="none",
-            activate_scrollbars=False,
+            anchor="w",
+            padx="5",
+            text="",
         )
         self.titleBarLabel.pack(side="left", fill="y")
 
@@ -112,7 +113,7 @@ class App(ctk.CTk):
 
         # Set up system tray icon
         self.tray_icon = pystray.Icon(
-            "icon", Image.open("assets/icon.ico"), "Quick-Stick", self.create_menu()
+            "icon", Image.open("assets/icon.png"), "Quick-Stick", self.create_menu()
         )
         self.tray_icon.run_detached()
 
@@ -137,13 +138,16 @@ class App(ctk.CTk):
         new_y_size = self.winfo_height() + event.y - self.drag_start_y
         if new_x_size >= 300 and new_y_size >= 60:
             self.geometry(f"{new_x_size}x{new_y_size}")
+            self.curr_width = new_x_size
+            self.curr_height = new_y_size
 
     # Command for close button to close window
     def close_window(self):
-        # Closes window
+
         self.destroy()
+
         if self.tray_icon:
-            self.tray_icon.stop()  # Stop the tray icon
+            self.tray_icon.stop()
 
     # Command for max button to maxmize window
     def max_window(self):
@@ -161,40 +165,53 @@ class App(ctk.CTk):
     # Command for min button to minimize window
     def min_window(self):
         self.withdraw()
-        self.tray_icon.visible = True  # Show the tray icon
 
     # Restores the window back to the screen
     def restore(self):
         self.deiconify()  # Show the window
         self.update_idletasks()  # Ensure the window is restored with the correct geometry
-        self.tray_icon.visible = False  # Hide the tray icon
 
     # Create menu options for system tray icon
     def create_menu(self):
         # Creates two options, a restore option and a quit option.
-        return (item("Restore", self.restore), item("Quit", self.close_window))
+        return (
+            item("Restore", self.restore),
+            item(
+                "Themes",
+                menu(
+                    item("Pink", lambda test: 2),
+                    item("Purple", lambda test: 2),
+                    item("Yellow", lambda test: 2),
+                    item("Blue", lambda test: 2),
+                    item("Green", lambda test: 2),
+                ),
+            ),
+        )
 
     # Command for collapse button to collapse window
     def collapse_window(self):
         if self.minimized:
-            self.geometry("300x200")
+            self.geometry(f"{self.curr_width}x{self.curr_height}")
 
-            # Set the title bar label to be the text we obtained
-            self.titleBarLabel.configure(state="normal")
-            self.titleBarLabel.delete("1.0", "end")
-            self.titleBarLabel.insert("1.0", "")
-            self.titleBarLabel.configure(state="disabled")
+            # Set text to empty string
+            self.titleBarLabel.configure(text="")
 
             # Set the state of minimized to be False
             self.minimized = False
         else:
             self.geometry(f"{self.winfo_width()}x{TITLE_BAR_SIZE}")
 
+            # Get the last index of the 1st line
+            endIndex = int(self.textbox.index("1.end").split(".")[1])
+
+            # Format the end index to apply to the get function
+            endIndexFormat = f"1.0 + {endIndex} chars"
+
+            # Use the get function with the start and end index to get the text from the textbox
+            self.text = self.textbox.get("1.0", endIndexFormat).strip()
+
             # Set the title bar label to be the text we obtained
-            self.titleBarLabel.configure(state="normal")
-            self.titleBarLabel.delete("1.0", "end")
-            self.titleBarLabel.insert("1.0", self.titleBarLabelStr)
-            self.titleBarLabel.configure(state="disabled")
+            self.titleBarLabel.configure(text=self.text)
 
             # Set the state of minimized to be true
             self.minimized = True
@@ -229,4 +246,5 @@ class BtnOptionModule(ctk.CTkButton):
 
 if __name__ == "__main__":
     app = App()
+    app.attributes("-topmost", True)
     app.mainloop()
