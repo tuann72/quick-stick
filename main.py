@@ -29,8 +29,8 @@ class App(ctk.CTk):
         self.maximized = False
         self.collapsed = False
         self.titleBarLabelStr = ""
-        self.curr_width = 300
-        self.curr_height = 200
+        self.prev_width = 300
+        self.prev_height = 200
         self.prev_x = 0
         self.prev_y = 0
 
@@ -134,6 +134,12 @@ class App(ctk.CTk):
         # Records the inital y position on the screen when clicked
         self.drag_start_y = event.y
 
+    def getPrevWinInfo(self):
+        self.prev_width = self.winfo_width()
+        self.prev_height = self.winfo_height()
+        self.prev_x = self.winfo_rootx()
+        self.prev_y = self.winfo_rooty()
+
     # Moves the window based on the difference between the mouse inital and final position
     def move_window(self, event):
         # winfo-rootx, x-coord of the top-left corner of the window relative to the screen
@@ -144,13 +150,15 @@ class App(ctk.CTk):
 
     # Resizes window when the bottom right button is selected and dragged
     def resize_window(self, event):
+        self.getPrevWinInfo()
         # Add the difference of mouse movement to current size.
         new_x_size = self.winfo_width() + event.x - self.drag_start_x
         new_y_size = self.winfo_height() + event.y - self.drag_start_y
         if new_x_size >= 300 and new_y_size >= 60:
             self.geometry(f"{new_x_size}x{new_y_size}")
-            self.curr_width = new_x_size
-            self.curr_height = new_y_size
+            self.prev_width = new_x_size
+            self.prev_height = new_y_size
+            self.maximized = False
 
     # Command for close button to close window
     def close_window(self):
@@ -165,21 +173,17 @@ class App(ctk.CTk):
         # If already maximized we return it to original size
         if self.maximized:
             self.geometry(
-                f"{self.curr_width}x{self.curr_height}+{self.prev_x}+{self.prev_y}"
+                f"{self.prev_width}x{self.prev_height}+{self.prev_x}+{self.prev_y}"
             )
             self.maximized = False
         else:
-            # Record current size
-            self.curr_width = self.winfo_width()
-            self.curr_height = self.winfo_height()
-            self.prev_x = self.winfo_rootx()
-            self.prev_y = self.winfo_rooty()
-
+            self.getPrevWinInfo()
             # Sets screen to max size and moves window to the top left
             self.geometry(
                 f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+{0}+{0}"
             )
             self.maximized = True
+            self.collapsed = False
 
     # Command for min button to minimize window
     def min_window(self):
@@ -189,7 +193,7 @@ class App(ctk.CTk):
     def collapse_window(self):
         if self.collapsed:
             self.geometry(
-                f"{self.curr_width}x{self.curr_height}+{self.prev_x}+{self.prev_y}"
+                f"{self.prev_width}x{self.prev_height}+{self.prev_x}+{self.prev_y}"
             )
 
             # Set text to empty string
@@ -198,10 +202,7 @@ class App(ctk.CTk):
             # Set the state of minimized to be False
             self.collapsed = False
         else:
-            self.curr_width = self.winfo_width()
-            self.curr_height = self.winfo_height()
-            self.prev_x = self.winfo_rootx()
-            self.prev_y = self.winfo_rooty()
+            self.getPrevWinInfo()
             self.geometry(f"{self.winfo_width()}x{TITLE_BAR_SIZE}")
 
             endIndex = 30
@@ -221,8 +222,7 @@ class App(ctk.CTk):
 
             # Set the state of minimized to be true
             self.collapsed = True
-
-            label_width = self.titleBarLabel.winfo_width()
+            self.maximized = False
 
     # Restores the window back to the screen
     def restore(self):
