@@ -4,6 +4,7 @@ from customtkinter import CTkImage  # Import CTkImage
 from PIL import Image
 from pystray import MenuItem as item, Menu as menu
 import pystray
+import math
 
 from settings import (
     TITLE_BAR_COLOR_LIST,
@@ -26,7 +27,7 @@ class App(ctk.CTk):
         closeImg = CTkImage(Image.open("assets/close.png"), size=(12, 12))
 
         self.maximized = False
-        self.minimized = False
+        self.collapsed = False
         self.titleBarLabelStr = ""
         self.curr_width = 300
         self.curr_height = 200
@@ -61,7 +62,6 @@ class App(ctk.CTk):
         # Creates a label for the sticky note shown in the title bar
         self.titleBarLabel = ctk.CTkLabel(
             self.titleBar,
-            width=240,
             height=TITLE_BAR_SIZE,
             text_color="black",
             font=("Helvetica", 12),
@@ -69,13 +69,17 @@ class App(ctk.CTk):
             anchor="w",
             padx="5",
             text="",
+            fg_color="yellow",
         )
-        self.titleBarLabel.pack(side="left", fill="y")
+        self.titleBarLabel.pack(side="left", fill="both", expand=True)
 
         self.titleBarLabel.bind("<Button-1>", self.on_drag_start)
         self.titleBarLabel.bind("<B1-Motion>", self.move_window)
 
         # Create buttons to minimize, maximize, and close the window
+        self.collapseBtn = BtnOptionModule(
+            self.titleBar, minImg, self.collapse_window, self.BUTTON_HOVER_COLOR
+        )
         self.minBtn = BtnOptionModule(
             self.titleBar, minImg, self.min_window, self.BUTTON_HOVER_COLOR
         )
@@ -90,6 +94,7 @@ class App(ctk.CTk):
         self.closeBtn.pack(side="right")
         self.maxBtn.pack(side="right")
         self.minBtn.pack(side="right")
+        self.collapseBtn.pack(side="right")
 
         # Creating a textbox to hold user input
         self.textbox = ctk.CTkTextbox(
@@ -101,7 +106,6 @@ class App(ctk.CTk):
             corner_radius=0,
         )
         self.textbox.grid(row=1, column=0, sticky="nsew")
-        self.textbox.bind("<KeyRelease>", self.update_title)
 
         # Create a button for the bottom right to resize window
         self.resizeBtn = ctk.CTkButton(
@@ -183,19 +187,28 @@ class App(ctk.CTk):
 
     # Command for collapse button to collapse window
     def collapse_window(self):
-        if self.minimized:
-            self.geometry(f"{self.curr_width}x{self.curr_height}")
+        if self.collapsed:
+            self.geometry(
+                f"{self.curr_width}x{self.curr_height}+{self.prev_x}+{self.prev_y}"
+            )
 
             # Set text to empty string
             self.titleBarLabel.configure(text="")
 
             # Set the state of minimized to be False
-            self.minimized = False
+            self.collapsed = False
         else:
+            self.curr_width = self.winfo_width()
+            self.curr_height = self.winfo_height()
+            self.prev_x = self.winfo_rootx()
+            self.prev_y = self.winfo_rooty()
             self.geometry(f"{self.winfo_width()}x{TITLE_BAR_SIZE}")
 
-            # Get the last index of the 1st line
-            endIndex = int(self.textbox.index("1.end").split(".")[1])
+            endIndex = 30
+
+            if self.titleBarLabel.winfo_width() > 220:
+                extraChars = math.floor((self.titleBarLabel.winfo_width() - 220) / 7.3)
+                endIndex += extraChars
 
             # Format the end index to apply to the get function
             endIndexFormat = f"1.0 + {endIndex} chars"
@@ -207,7 +220,9 @@ class App(ctk.CTk):
             self.titleBarLabel.configure(text=self.text)
 
             # Set the state of minimized to be true
-            self.minimized = True
+            self.collapsed = True
+
+            label_width = self.titleBarLabel.winfo_width()
 
     # Restores the window back to the screen
     def restore(self):
@@ -249,6 +264,7 @@ class App(ctk.CTk):
 
         self.updateColors()
 
+    # Update the colors based on the theme selected
     def updateColors(self):
         # Update main window
         self.configure(fg_color=self.TEXTBOX_COLOR)
@@ -267,17 +283,6 @@ class App(ctk.CTk):
         # Update other buttons
         for btn in [self.minBtn, self.maxBtn, self.closeBtn]:
             btn.configure(hover_color=self.BUTTON_HOVER_COLOR)
-
-    # Updates the title bar's label which correlates to the first line of the textbox
-    def update_title(self, event):
-        # we get the last index of the 1st line
-        endIndex = int(self.textbox.index("1.end").split(".")[1])
-
-        # format the end index to apply to the get function
-        endIndexFormat = f"1.0 + {endIndex} chars"
-
-        # use the get function with the start and end index to get the text from the textbox
-        self.titleBarLabelStr = self.textbox.get("1.0", endIndexFormat).strip()
 
 
 class BtnOptionModule(ctk.CTkButton):
